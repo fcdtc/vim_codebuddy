@@ -40,22 +40,23 @@ function! s:open_codebuddy()
     let s:original_winid = win_getid()
 
     " 计算窗口宽度
-    let width = float2nr(g:codebuddy_width * &columns)
+    let width = float2nr(get(g:, 'codebuddy_width', 0.3) * &columns)
 
     " 创建终端 - 使用统一的方法
     try
-        if g:codebuddy_position == 'right'
+        if get(g:, 'codebuddy_position', 'right') == 'right'
             execute 'topleft ' . width . 'vsplit'
         else
             execute 'botright ' . width . 'vsplit'
         endif
 
         " 创建终端
+        let shell_cmd = get(g:, 'codebuddy_shell', 'codebuddy-code')
         if has('nvim')
-            terminal g:codebuddy_shell
+            execute 'terminal ' . shell_cmd
             let s:codebuddy_bufnr = bufnr('%')
         else
-            let s:codebuddy_bufnr = term_start(g:codebuddy_shell, {'curwin': v:true})
+            let s:codebuddy_bufnr = term_start(shell_cmd, {'curwin': v:true})
         endif
 
         " 设置窗口ID
@@ -143,11 +144,11 @@ function! s:recreate_window()
     let s:original_winid = win_getid()
 
     " 计算窗口宽度
-    let width = float2nr(g:codebuddy_width * &columns)
+    let width = float2nr(get(g:, 'codebuddy_width', 0.3) * &columns)
 
     " 创建新窗口
     try
-        if g:codebuddy_position == 'right'
+        if get(g:, 'codebuddy_position', 'right') == 'right'
             execute 'topleft ' . width . 'vsplit'
         else
             execute 'botright ' . width . 'vsplit'
