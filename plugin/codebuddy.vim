@@ -190,23 +190,23 @@ endfunction
 " 公共接口
 " =============================================================================
 
-function! CodeBuddyOpen()
+function! ClaudeInternalOpen()
     call s:open_codebuddy()
 endfunction
 
-function! CodeBuddyShow()
+function! ClaudeInternalShow()
     call s:show_codebuddy()
 endfunction
 
-function! CodeBuddyHide()
+function! ClaudeInternalHide()
     call s:hide_codebuddy()
 endfunction
 
-function! CodeBuddyToggle()
+function! ClaudeInternalToggle()
     call s:toggle_codebuddy()
 endfunction
 
-function! CodeBuddyClose()
+function! ClaudeInternalClose()
     call s:close_codebuddy()
 endfunction
 
@@ -214,30 +214,30 @@ endfunction
 " 命令定义
 " ============================================================================="
 
-command! CodeBuddy call CodeBuddyOpen()
-command! CodeBuddyShow call CodeBuddyShow()
-command! CodeBuddyHide call CodeBuddyHide()
-command! CodeBuddyToggle call CodeBuddyToggle()
-command! CodeBuddyClose call CodeBuddyClose()
+command! ClaudeInternal call ClaudeInternalOpen()
+command! ClaudeInternalShow call ClaudeInternalShow()
+command! ClaudeInternalHide call ClaudeInternalHide()
+command! ClaudeInternalToggle call ClaudeInternalToggle()
+command! ClaudeInternalClose call ClaudeInternalClose()
 
 " ============================================================================="
 " 快捷键绑定
 " =============================================================================
 
-nnoremap <leader>cb :CodeBuddy<CR>
-nnoremap <leader>th :CodeBuddyToggle<CR>
-nnoremap <leader>ts :CodeBuddyShow<CR>
-nnoremap <leader>td :CodeBuddyHide<CR>
-nnoremap <leader>tk :CodeBuddyClose<CR>
+nnoremap <leader>ci :ClaudeInternal<CR>
+nnoremap <leader>th :ClaudeInternalToggle<CR>
+nnoremap <leader>ts :ClaudeInternalShow<CR>
+nnoremap <leader>td :ClaudeInternalHide<CR>
+nnoremap <leader>tk :ClaudeInternalClose<CR>
 
 " 终端模式快捷键 - 简化版本
 if has('nvim')
-    tnoremap <buffer> <C-t> <C-\><C-n>:CodeBuddyToggle<CR>
-    tnoremap <buffer> <C-q> <C-\><C-n>:CodeBuddyHide<CR>
+    tnoremap <buffer> <C-t> <C-\><C-n>:ClaudeInternalToggle<CR>
+    tnoremap <buffer> <C-q> <C-\><C-n>:ClaudeInternalHide<CR>
 else
     " Vim 终端模式快捷键
-    tnoremap <buffer> <C-t> <C-w>:CodeBuddyToggle<CR>
-    tnoremap <buffer> <C-q> <C-w>:CodeBuddyHide<CR>
+    tnoremap <buffer> <C-t> <C-w>:ClaudeInternalToggle<CR>
+    tnoremap <buffer> <C-q> <C-w>:ClaudeInternalHide<CR>
 endif
 
 " ============================================================================="
@@ -262,6 +262,6 @@ endfunction
 " 加载提示
 " ============================================================================="
 
-echom "CodeBuddy Terminal Plugin 已加载!"
-echom "命令: :CodeBuddy, :CodeBuddyShow, :CodeBuddyHide, :CodeBuddyToggle, :CodeBuddyClose"
-echom "快捷键: <leader>cb, <leader>th, <leader>ts, <leader>td, <leader>tk"
+echom "ClaudeInternal Terminal Plugin 已加载!"
+echom "命令: :ClaudeInternal, :ClaudeInternalShow, :ClaudeInternalHide, :ClaudeInternalToggle, :ClaudeInternalClose"
+echom "快捷键: <leader>ci, <leader>th, <leader>ts, <leader>td, <leader>tk"

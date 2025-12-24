@@ -189,23 +189,23 @@ endfunction
 " 公共接口
 " =============================================================================
 
-function! CodeBuddyOpen()
+function! ClaudeInternalOpen()
     call s:open_codebuddy()
 endfunction
 
-function! CodeBuddyShow()
+function! ClaudeInternalShow()
     call s:show_codebuddy()
 endfunction
 
-function! CodeBuddyHide()
+function! ClaudeInternalHide()
     call s:hide_codebuddy()
 endfunction
 
-function! CodeBuddyToggle()
+function! ClaudeInternalToggle()
     call s:toggle_codebuddy()
 endfunction
 
-function! CodeBuddyClose()
+function! ClaudeInternalClose()
     call s:close_codebuddy()
 endfunction
 
@@ -213,11 +213,11 @@ endfunction
 " 命令定义
 " ============================================================================="
 
-command! CodeBuddy call CodeBuddyOpen()
-command! CodeBuddyShow call CodeBuddyShow()
-command! CodeBuddyHide call CodeBuddyHide()
-command! CodeBuddyToggle call CodeBuddyToggle()
-command! CodeBuddyClose call CodeBuddyClose()
+command! ClaudeInternal call ClaudeInternalOpen()
+command! ClaudeInternalShow call ClaudeInternalShow()
+command! ClaudeInternalHide call ClaudeInternalHide()
+command! ClaudeInternalToggle call ClaudeInternalToggle()
+command! ClaudeInternalClose call ClaudeInternalClose()
 
 " ============================================================================="
 " 快捷键绑定

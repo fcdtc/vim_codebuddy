@@ -79,5 +79,5 @@ call s:bind_keymap(g:floaterm_keymap_show,   'FloatermShow')
 call s:bind_keymap(g:floaterm_keymap_kill,   'FloatermKill')
 call s:bind_keymap(g:floaterm_keymap_toggle, 'FloatermToggle')
 
-" Custom command for opening codebuddy in right-side terminal
-command! CodeBuddy call floaterm#new(0, 'claude-internal', {}, {'wintype': 'vsplit', 'position': 'botright', 'width': 0.35, 'height': 1.0})
+" Custom command for opening ClaudeInternal in right-side terminal
+command! ClaudeInternal call floaterm#new(0, 'claude-internal', {}, {'wintype': 'vsplit', 'position': 'botright', 'width': 0.35, 'height': 1.0})
