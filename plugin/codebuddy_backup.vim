@@ -1,7 +1,7 @@
 " ============================================================================="
-" CodeBuddy Terminal Plugin - 简化兼容版本
+" CodeBuddy Terminal Plugin - 独立版本
 " 在右侧30%区域打开CodeBuddy终端，提供显示/隐藏/关闭功能
-" 完全兼容 Vim 8.0+ 和 Neovim
+" 完全独立，不依赖vim-floaterm
 " =============================================================================
 
 " 防止重复加载
@@ -12,7 +12,7 @@ let g:loaded_codebuddy = 1
 
 " ============================================================================="
 " 全局变量配置
-" =============================================================================
+" ============================================================================="
 
 let g:codebuddy_shell = get(g:, 'codebuddy_shell', 'codebuddy-code')
 let g:codebuddy_width = get(g:, 'codebuddy_width', 0.3)
@@ -39,50 +39,78 @@ function! s:open_codebuddy()
     " 保存当前窗口
     let s:original_winid = win_getid()
 
-    " 计算窗口宽度
+    " 创建垂直分割窗口
     let width = float2nr(g:codebuddy_width * &columns)
-
-    " 创建终端 - 使用统一的方法
-    try
+    if has('nvim')
+        " Neovim 方式
+        if g:codebuddy_position == 'right'
+            execute 'topleft vsplit | vertical resize ' . width
+            execute 'wincmd L' " 移动到最右边
+        else
+            execute 'topleft vsplit | vertical resize ' . width
+            execute 'wincmd H' " 移动到最左边
+        endif
+    else
+        " Vim 8.0+ 方式
         if g:codebuddy_position == 'right'
             execute 'topleft ' . width . 'vsplit'
         else
             execute 'botright ' . width . 'vsplit'
         endif
+    endif
 
-        " 创建终端
-        if has('nvim')
-            terminal g:codebuddy_shell
-            let s:codebuddy_bufnr = bufnr('%')
-        else
-            let s:codebuddy_bufnr = term_start(g:codebuddy_shell, {'curwin': v:true})
-        endif
+    " 创建终端缓冲区
+    if has('nvim')
+        " Neovim 方式
+        let s:codebuddy_bufnr = nvim_create_buf(v:false, v:true)
+        call nvim_win_set_buf(0, s:codebuddy_bufnr)
+        " 切换到缓冲区并启动终端
+        execute 'buffer ' . s:codebuddy_bufnr
+        call s:start_terminal_nvim()
+    else
+        " Vim 8.0+ 方式
+        let s:codebuddy_bufnr = term_start(g:codebuddy_shell, {
+              \ 'curwin': v:true,
+              \ 'norestore': v:true,
+              \ 'hidden': v:true
+              \ })
+    endif
 
-        " 设置窗口ID
-        let s:codebuddy_winid = win_getid()
-        let s:is_visible = v:true
+    " 设置窗口选项
+    setlocal winfixwidth
+    setlocal nospell
+    setlocal nonumber
+    setlocal norelativenumber
 
-        " 设置窗口选项
-        setlocal winfixwidth
-        setlocal nospell
-        setlocal nonumber
-        setlocal norelativenumber
-        setlocal statusline=CodeBuddy
+    " 设置窗口标题
+    let s:codebuddy_winid = win_getid()
+    call s:set_window_title()
 
-        " 进入终端模式
-        if !has('nvim')
-            startinsert
-        endif
+    " 进入终端模式
+    if has('nvim')
+        startinsert
+    else
+        :normal! i
+    endif
 
-        echom "CodeBuddy 终端已打开"
+    echom "CodeBuddy 终端已打开"
+endfunction
 
-    catch
-        echom "打开 CodeBuddy 终端失败: " . v:exception
-        " 回退到原始窗口
-        if win_gotoid(s:original_winid)
-            " 成功返回
-        endif
-    endtry
+" Neovim 终端启动函数
+function! s:start_terminal_nvim()
+    let s:terminal_job_id = termopen(g:codebuddy_shell, {
+          \ 'on_exit': function('s:on_terminal_exit'),
+          \ })
+endfunction
+
+" 终端退出回调
+function! s:on_terminal_exit(job_id, status, event)
+    if a:job_id == get(s:, 'terminal_job_id', -1)
+        let s:codebuddy_bufnr = -1
+        let s:codebuddy_winid = -1
+        let s:is_visible = v:false
+        echom "CodeBuddy 终端已退出"
+    endif
 endfunction
 
 " 显示CodeBuddy终端
@@ -97,6 +125,7 @@ function! s:show_codebuddy()
         if s:codebuddy_winid != -1 && win_gotoid(s:codebuddy_winid)
             " 窗口存在，直接显示
             let s:is_visible = v:true
+            call s:set_window_title()
         else
             " 窗口不存在，重新创建
             call s:recreate_window()
@@ -118,6 +147,17 @@ endfunction
 " 关闭CodeBuddy终端
 function! s:close_codebuddy()
     if s:codebuddy_bufnr != -1 && bufexists(s:codebuddy_bufnr)
+        " 尝试优雅关闭终端进程
+        if has('nvim')
+            if get(s:, 'terminal_job_id', -1) != -1
+                call jobstop(s:terminal_job_id)
+            endif
+        else
+            if bufloaded(s:codebuddy_bufnr)
+                call term_sendkeys(s:codebuddy_bufnr, "exit\r")
+            endif
+        endif
+
         " 关闭窗口
         if s:codebuddy_winid != -1 && win_gotoid(s:codebuddy_winid)
             close!
@@ -132,6 +172,7 @@ function! s:close_codebuddy()
         let s:codebuddy_bufnr = -1
         let s:codebuddy_winid = -1
         let s:is_visible = v:false
+        let s:terminal_job_id = -1
 
         echom "CodeBuddy 终端已关闭"
     endif
@@ -139,41 +180,46 @@ endfunction
 
 " 重新创建窗口
 function! s:recreate_window()
-    " 保存当前窗口
     let s:original_winid = win_getid()
-
-    " 计算窗口宽度
     let width = float2nr(g:codebuddy_width * &columns)
 
-    " 创建新窗口
-    try
+    if has('nvim')
+        " Neovim 方式
+        if g:codebuddy_position == 'right'
+            execute 'topleft vsplit | vertical resize ' . width
+            execute 'wincmd L'
+        else
+            execute 'topleft vsplit | vertical resize ' . width
+            execute 'wincmd H'
+        endif
+    else
+        " Vim 8.0+ 方式
         if g:codebuddy_position == 'right'
             execute 'topleft ' . width . 'vsplit'
         else
             execute 'botright ' . width . 'vsplit'
         endif
+    endif
 
-        " 切换到终端缓冲区
-        execute 'buffer ' . s:codebuddy_bufnr
+    execute 'buffer ' . s:codebuddy_bufnr
+    setlocal winfixwidth
+    setlocal nospell
+    setlocal nonumber
+    setlocal norelativenumber
 
-        " 更新窗口ID和状态
-        let s:codebuddy_winid = win_getid()
-        let s:is_visible = v:true
+    let s:codebuddy_winid = win_getid()
+    let s:is_visible = v:true
+    call s:set_window_title()
+endfunction
 
-        " 设置窗口选项
-        setlocal winfixwidth
-        setlocal nospell
-        setlocal nonumber
-        setlocal norelativenumber
+" 设置窗口标题
+function! s:set_window_title()
+    if exists('+winhighlight')
+        setlocal winhighlight=Normal:Normal
+    endif
+    if exists('&statusline')
         setlocal statusline=CodeBuddy
-
-    catch
-        echom "重新创建窗口失败: " . v:exception
-        " 回退到原始窗口
-        if win_gotoid(s:original_winid)
-            " 成功返回
-        endif
-    endtry
+    endif
 endfunction
 
 " 切换显示/隐藏状态
@@ -211,7 +257,7 @@ endfunction
 
 " ============================================================================="
 " 命令定义
-" ============================================================================="
+" =============================================================================
 
 command! CodeBuddy call CodeBuddyOpen()
 command! CodeBuddyShow call CodeBuddyShow()
@@ -221,7 +267,7 @@ command! CodeBuddyClose call CodeBuddyClose()
 
 " ============================================================================="
 " 快捷键绑定
-" =============================================================================
+" ============================================================================="
 
 nnoremap <leader>cb :CodeBuddy<CR>
 nnoremap <leader>th :CodeBuddyToggle<CR>
@@ -229,18 +275,18 @@ nnoremap <leader>ts :CodeBuddyShow<CR>
 nnoremap <leader>td :CodeBuddyHide<CR>
 nnoremap <leader>tk :CodeBuddyClose<CR>
 
-" 终端模式快捷键 - 简化版本
+" 终端模式快捷键
 if has('nvim')
-    tnoremap <buffer> <C-t> <C-\><C-n>:CodeBuddyToggle<CR>
-    tnoremap <buffer> <C-q> <C-\><C-n>:CodeBuddyHide<CR>
+    tnoremap <C-t> <C-\><C-n>:CodeBuddyToggle<CR>
+    tnoremap <C-q> <C-\><C-n>:CodeBuddyHide<CR>
 else
-    " Vim 终端模式快捷键
-    tnoremap <buffer> <C-t> <C-w>:CodeBuddyToggle<CR>
-    tnoremap <buffer> <C-q> <C-w>:CodeBuddyHide<CR>
+    " 在Vim中，终端模式下直接执行命令
+    tnoremap <C-t> <C-w>:CodeBuddyToggle<CR>
+    tnoremap <C-q> <C-w>:CodeBuddyHide<CR>
 endif
 
 " ============================================================================="
-" 自动命令和清理
+" 自动命令
 " =============================================================================
 
 augroup CodeBuddy
@@ -253,13 +299,15 @@ augroup END
 " 退出时清理
 function! s:cleanup_on_exit()
     if s:codebuddy_bufnr != -1 && bufexists(s:codebuddy_bufnr)
-        " 这里不做特殊处理，让Vim自动清理
+        if has('nvim') && get(s:, 'terminal_job_id', -1) != -1
+            call jobstop(s:terminal_job_id)
+        endif
     endif
 endfunction
 
 " ============================================================================="
 " 加载提示
-" ============================================================================="
+" =============================================================================
 
 echom "CodeBuddy Terminal Plugin 已加载!"
 echom "命令: :CodeBuddy, :CodeBuddyShow, :CodeBuddyHide, :CodeBuddyToggle, :CodeBuddyClose"
