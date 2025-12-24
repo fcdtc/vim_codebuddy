@@ -14,7 +14,7 @@ let g:loaded_codebuddy = 1
 " 全局变量配置
 " =============================================================================
 
-let g:codebuddy_shell = get(g:, 'codebuddy_shell', 'codebuddy-code')
+let g:codebuddy_shell = get(g:, 'codebuddy_shell', 'claude-internal')
 let g:codebuddy_width = get(g:, 'codebuddy_width', 0.3)
 let g:codebuddy_height = get(g:, 'codebuddy_height', 1.0)
 let g:codebuddy_position = get(g:, 'codebuddy_position', 'right')
@@ -51,7 +51,7 @@ function! s:open_codebuddy()
         endif
 
         " 创建终端
-        let shell_cmd = get(g:, 'codebuddy_shell', 'codebuddy-code')
+        let shell_cmd = get(g:, 'codebuddy_shell', 'claude-internal')
         if has('nvim')
             execute 'terminal ' . shell_cmd
             let s:codebuddy_bufnr = bufnr('%')
