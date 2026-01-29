@@ -44,11 +44,11 @@ function! s:open_codebuddy()
 
     " 创建终端 - 使用统一的方法
     try
-        if get(g:, 'codebuddy_position', 'right') == 'right'
-            execute 'topleft ' . width . 'vsplit'
-        else
-            execute 'botright ' . width . 'vsplit'
-        endif
+        " 创建垂直分割窗口
+        execute width . 'vsplit'
+
+        " 强制窗口移动到最左边（确保 CodeBuddy 占据最左边分屏）
+        wincmd H
 
         " 创建终端
         let shell_cmd = get(g:, 'codebuddy_shell', 'claude-internal')
@@ -148,11 +148,11 @@ function! s:recreate_window()
 
     " 创建新窗口
     try
-        if get(g:, 'codebuddy_position', 'right') == 'right'
-            execute 'topleft ' . width . 'vsplit'
-        else
-            execute 'botright ' . width . 'vsplit'
-        endif
+        " 创建垂直分割窗口
+        execute width . 'vsplit'
+
+        " 强制窗口移动到最左边（确保 CodeBuddy 占据最左边分屏）
+        wincmd H
 
         " 切换到终端缓冲区
         execute 'buffer ' . s:codebuddy_bufnr
